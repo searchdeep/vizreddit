@@ -65,7 +65,11 @@
           </li>
 
           <li v-for="(fil,idx) in filters">
-            <button type="button" class="btn bg-pink btn-filter">{{fil.type}} : {{fil.negate?'! ':''}}{{fil.value}}<i class="fa fa-close position-right" @click="removeFilter(idx)"></i></button>
+            <button type="button" @click="removeFilter(idx)" class="btn bg-pink btn-filter">{{fil.type}} : {{fil.negate?'! ':''}}{{fil.value}}<i class="fa fa-close position-right" ></i></button>
+          </li>
+
+          <li>
+            <button type="button" class="btn btn-primary btn-add" @click="addFilter = !addFilter">Add Filter</button>
           </li>
 
         </ul>
@@ -190,7 +194,7 @@ export default {
       type: this.$route.query.type || 'Any',
       year: this.$route.query.year || 'Any',
       subreddit: this.$route.query.subreddit || '',
-      user: this.$route.query.user || '',
+      author: this.$route.query.author || '',
 
       // Filter
       addFilter: false,
@@ -318,6 +322,36 @@ export default {
       this.filters.splice(idx, 1)
     },
 
+    parseQueryParams () {
+      // Parse subreddit
+      if (this.subreddit !== '') {
+        let srs = this.subreddit.split(',')
+        srs.forEach((s) => {
+          let f = {type: 'subreddit'}
+          if (s.charAt(0) === '!') {
+            f.negate = true
+            s = s.substr(1)
+          }
+          f.value = s
+          this.filters.push(f)
+        })
+      }
+
+      // Parse authors
+      if (this.author !== '') {
+        let srs = this.author.split(',')
+        srs.forEach((s) => {
+          let f = {type: 'author'}
+          if (s.charAt(0) === '!') {
+            f.negate = true
+            s = s.substr(1)
+          }
+          f.value = s
+          this.filters.push(f)
+        })
+      }
+    },
+
     performQuery (q, now) {
       let qs = JSON.stringify(q)
       if (this.cache[qs]) {
@@ -383,7 +417,7 @@ export default {
       }
 
       // Update route
-      this.$router.push({path: '', query: {q: this.q, nsfw: this.nsfw, type: this.type, year: this.year}})
+      this.$router.push({path: '', query: {q: this.q, nsfw: this.nsfw, type: this.type, year: this.year, author: this.author, subreddit: this.subreddit}})
     },
 
     setupCharts: debounce(function () {
@@ -393,6 +427,7 @@ export default {
   },
 
   mounted () {
+    this.parseQueryParams()
     this.queryReddit(true)
   },
 
@@ -414,6 +449,34 @@ export default {
     },
 
     filters (value) {
+      // setup query params
+      let sr = ''
+      this.filters.forEach((f) => {
+        if (f.type === 'subreddit') {
+          if (sr === '') {
+            if (f.negate) {
+              sr = '!'
+            }
+          }
+          sr = sr + f.value + ','
+        }
+      })
+      this.subreddit = sr.replace(/,\s*$/, '')
+
+      let us = ''
+      this.filters.forEach((f) => {
+        if (f.type === 'author') {
+          if (us === '') {
+            if (f.negate) {
+              us = '!'
+            }
+          }
+          us = us + f.value + ','
+        }
+      })
+      this.author = us.replace(/,\s*$/, '')
+
+      // query
       this.queryReddit(true)
     }
   }
@@ -462,6 +525,12 @@ export default {
 .btn-clear {
   padding: 2px 10px;
   margin-top: 10px;
+  font-weight: bold;
+}
+
+.btn-add {
+  padding: 2px 10px;
+  margin-top: 1px;
   font-weight: bold;
 }
 
