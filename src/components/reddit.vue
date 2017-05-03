@@ -56,8 +56,32 @@
       </div>
     </div>
 
+    <!-- start filters -->
+      <div class="breadcrumb-line mb-10" v-if="filters.length > 0">
+        <ul class="breadcrumb">
+
+          <li>
+            <span>Filters :</span>
+          </li>
+
+          <li v-for="(fil,idx) in filters">
+            <button type="button" class="btn bg-pink btn-filter">{{fil.type}} : {{fil.negate?'! ':''}}{{fil.value}}<i class="fa fa-close position-right" @click="removeFilter(idx)"></i></button>
+          </li>
+
+        </ul>
+        <ul class="breadcrumb-elements">
+          <li>
+            <button type="button" class="btn btn-primary btn-clear" @click="filters = []">Clear All</button>
+          </li>
+        </ul>
+      </div>
+      <!-- end filters -->
+
+
+    <div class="mb-15"/>
+
     <div class="content" v-if="addFilter">
-      <rfilter v-on:cancel="addFilter = false"/>
+      <rfilter v-on:cancel="addFilter = false" v-on:add="newFilter"/>
     </div>
 
     <div class="content" v-if="!(!data.hits || data.hits.length === 0)">
@@ -165,9 +189,12 @@ export default {
       nsfw: this.$route.query.nsfw || 'Any',
       type: this.$route.query.type || 'Any',
       year: this.$route.query.year || 'Any',
+      subreddit: this.$route.query.subreddit || '',
+      user: this.$route.query.user || '',
 
       // Filter
       addFilter: false,
+      filters: [],
 
       // Select options
       nsfwOptions: ['Any', 'None', 'Only'],
@@ -238,11 +265,57 @@ export default {
         q.getFacets.push('year')
       }
 
+      if (this.filters) {
+        // track filters for subreddit and user
+        let sf = []
+        let uf = []
+        // track negation values for sub and u
+        let sfn = false
+        let ufn = false
+
+        this.filters.forEach((ff) => {
+          if (ff.type === 'subreddit') {
+            sf.push(ff.value)
+            sfn = ff.negate
+          } else if (ff.type === 'author') {
+            uf.push(ff.value)
+            ufn = ff.negate
+          }
+        })
+
+        if (sf.length > 0) {
+          if (sfn) {
+            f.subreddit = {'$nin': sf}
+          } else {
+            f.subreddit = {'$or': sf}
+          }
+        }
+
+        if (uf.length > 0) {
+          if (ufn) {
+            f.author = {'$nin': uf}
+          } else {
+            f.author = {'$or': uf}
+          }
+        }
+      }
+
       if (f) {
         q.filter = f
       }
 
       this.performQuery(q, now)
+    },
+
+    newFilter (f) {
+      if (f.value.length > 0) {
+        this.filters.push(f)
+      }
+      this.addFilter = false
+    },
+
+    removeFilter (idx) {
+      this.filters.splice(idx, 1)
     },
 
     performQuery (q, now) {
@@ -338,6 +411,10 @@ export default {
 
     type (value) {
       this.queryReddit(true)
+    },
+
+    filters (value) {
+      this.queryReddit(true)
     }
   }
 
@@ -380,6 +457,26 @@ export default {
   padding: 2px 10px;
   margin-top: -3px;
   font-weight: bold;
+}
+
+.btn-clear {
+  padding: 2px 10px;
+  margin-top: 10px;
+  font-weight: bold;
+}
+
+.btn-filter {
+  padding: 2px 10px;
+  margin-top: 1px;
+}
+
+.page-header-content+.breadcrumb-line {
+    margin-bottom: 0px;
+    border-bottom: 1px solid #ddd;
+}
+
+.breadcrumb-line {
+    border-bottom: 1px solid #ddd;
 }
 
 </style>

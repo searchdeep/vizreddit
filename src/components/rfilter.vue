@@ -6,14 +6,14 @@
           <h4 class="panel-title">Add Filter</h4>
         </div>
         <div class="panel-body">
-          <form class="form-horizontal" action="blah">
+          <form class="form-horizontal">
 
             <div class="form-group">
               <label class="control-label col-lg-2">Filter type</label>
               <div class="col-lg-10">
                 <select class="sel form-control" v-model="sfilter">
-                  <option v-for="option in filterOptions" :value="option">
-                  {{ option }}
+                  <option v-for="option in filterOptions" :value="option.id">
+                  {{ option.text }}
                   </option>
                 </select>
               </div>
@@ -31,12 +31,18 @@
               </div>
             </div>
 
-            <typeahead></typeahead>
+            <div class="form-group">
+              <label class="control-label col-lg-2">Filter</label>
+              <div class="col-lg-10">
+                <typeahead :value="fvalue" :type="sfilter" v-on:selected="selected" style="margin-top: -8px;"></typeahead>
+              </div>
+            </div>
+
 
           </form>
           <div style="display: inline-block;" class="pull-right">
             <button type="button" class="btn btn-primary btn-sm" @click="cancel">Cancel</button>
-            <button type="button" class="btn btn-primary btn-sm">Add</button>
+            <button type="button" class="btn btn-primary btn-sm" @click="add">Add</button>
           </div>
         </div>
       </div>
@@ -52,17 +58,25 @@ export default {
 
   data () {
     return {
-      filterOptions: ['Subreddit', 'User', 'Domain'],
-      sfilter: 'Subreddit',
+      filterOptions: [{text: 'Subreddit', id: 'subreddit'}, {text: 'User', id: 'author'}],
+      sfilter: 'subreddit',
       negate: false,
-      vi: '',
-      sugg: []
+      fvalue: ''
     }
   },
 
   methods: {
     cancel () {
       this.$emit('cancel')
+    },
+
+    add () {
+      this.$emit('add', {type: this.sfilter, negate: this.negate, value: this.fvalue})
+    },
+
+    selected (f) {
+      console.log(f)
+      this.fvalue = f
     }
   }
 }
