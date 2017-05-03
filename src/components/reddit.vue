@@ -15,14 +15,38 @@
 
       <div class="breadcrumb-line">
         <ul class="breadcrumb mb-5">
+
           <li>
-            <span class="pl-10">NSFW :</span>
-            <select class="sel ml-10" v-model="nsfw">
+            <span>NSFW :</span>
+            <select class="sel ml-5" v-model="nsfw">
               <option v-for="option in nsfwOptions" :value="option">
               {{ option }}
               </option>
             </select>
           </li>
+
+          <li>
+            <span>Post Type :</span>
+            <select class="sel ml-5" v-model="type">
+              <option v-for="option in typeOptions" :value="option">
+              {{ option }}
+              </option>
+            </select>
+          </li>
+
+          <li>
+            <span>Year :</span>
+            <select class="sel ml-5" v-model="year">
+              <option v-for="option in yearOptions" :value="option">
+              {{ option }}
+              </option>
+            </select>
+          </li>
+
+          <li>
+            <button type="button" class="btn btn-primary btn-xs" @click="addFilter = !addFilter">Add Filter</button>
+          </li>
+ 
         </ul>
         <ul class="breadcrumb-elements">
           <li>
@@ -32,20 +56,19 @@
       </div>
     </div>
 
-    <div class="content" v-if="!data.hits || data.hits.length === 0">
-      <div class="jumbotron mt-20 pt-20">
-        <h2>No matching results found</h2>
-      </div>
+    <div class="content" v-if="addFilter">
+      <rfilter v-on:cancel="addFilter = false"/>
     </div>
 
-    <div class="content" v-else>
+    <div class="content" v-if="!(!data.hits || data.hits.length === 0)">
 
       <div class="row">
 
         <div class="col-md-6">
           <div class="panel panel-default">
             <div class="panel-heading">
-              <h6 class="panel-title">Posts by year</h6>
+              <h6 class="panel-title" v-if="year === 'Any'">Posts By Year</h6>
+              <h6 class="panel-title" v-else>Posts By Month - {{year}}</h6>
             </div>
             <div class="panel-body">
               <chart :config="dateChart"></chart>
@@ -56,7 +79,7 @@
         <div class="col-md-6">
           <div class="panel panel-default">
             <div class="panel-heading">
-              <h6 class="panel-title">Posts by subreddit</h6>
+              <h6 class="panel-title">Posts By Subreddit</h6>
             </div>
             <div class="panel-body">
               <chart :config="subChart"></chart>
@@ -71,7 +94,7 @@
         <div class="col-md-6">
           <div class="panel panel-default">
             <div class="panel-heading">
-              <h6 class="panel-title">Posts by domain</h6>
+              <h6 class="panel-title">Posts By Domain</h6>
             </div>
             <div class="panel-body">
               <chart :config="domChart"></chart>
@@ -79,20 +102,60 @@
           </div>
         </div>
 
-      </div>
+        <div class="col-md-6">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <h6 class="panel-title">NSFW & Self Text Posts</h6>
+                </div>
+                <div class="panel-body">
+                    <div class='row'>
+                        <div class="col-md-6">
+                            <chart :config="nsfwChart"/>
+                        </div>
+                        <div class="col-md-6">
+                            <chart :config="selfChart"/>
+                        </div>
+                    </div>
+                </div>
+            </div>
+       </div>
+     </div>
 
+     <div class="row">
+        <div class="col-md-8 col-md-offset-2">
+          <div class="panel panel-default">
+            <div class="panel-heading">
+              <h5 class="panel-title">Search Results</h5>
+            </div>
+            <div class="panel-body no-padding">
+                <div class="vote-item" v-for="hit in data.hits">
+                  <post :hit="hit"/>
+                </div>
+            </div>
+          </div>
+        </div>
+     </div>
+
+    </div>
+
+    <div class="content" v-else>
+      <div class="jumbotron mt-20 pt-20">
+        <h2>No matching results found</h2>
+      </div>
     </div>
 
   </div>
 </template>
 <script>
 import chart from './chart.vue'
+import rfilter from './rfilter.vue'
+import post from './post.vue'
 import utils from '../utils.js'
 import debounce from 'debounce'
 
 export default {
   name: 'reddit',
-  components: {chart},
+  components: {chart, post, rfilter},
 
   data () {
     return {
@@ -100,17 +163,38 @@ export default {
       // Route params
       q: this.$route.query.q || '',
       nsfw: this.$route.query.nsfw || 'Any',
+      type: this.$route.query.type || 'Any',
+      year: this.$route.query.year || 'Any',
 
+      // Filter
+      addFilter: false,
+
+      // Select options
       nsfwOptions: ['Any', 'None', 'Only'],
+      typeOptions: ['Any', 'Link', 'Text'],
+      yearOptions: ['Any', '2007', '2008', '2009', '2010', '2011', '2012', '2013', '2014', '2015', '2016', '2017'],
 
+      // Result data
       data: {},
 
+      // Cache results for reuse
       cache: {},
 
       // Charts
       subChart: utils.getBarChart('subreddit-chart', ['#94ae0a']),
       dateChart: utils.getBarChart('date-chart', ['#115fa6']),
-      domChart: utils.getBarChart('domain-chart', ['#24ad9a'])
+      domChart: utils.getBarChart('domain-chart', ['#24ad9a']),
+      nsfwChart: {
+        chart_id: 'nsfw-chart',
+        data: { type: 'donut', unload: true, columns: [], selection: { enabled: false, grouped: false } },
+        options: { donut: {title: 'NSFW'}, color: { pattern: ['#a61120', '#94ae0a', '#ff8809', '#ffd13e', '#a61187'] } }
+      },
+      selfChart: {
+        chart_id: 'self-chart',
+        data: { type: 'donut', unload: true, columns: [], selection: { enabled: false, grouped: false } },
+        options: {donut: {title: 'Post Type'}, color: {pattern: ['#24ad9a', '#115fa6', '#ff8809', '#ffd13e', '#a61187']}}
+      }
+
     }
   },
 
@@ -120,7 +204,11 @@ export default {
     },
 
     years: function () {
-      return this.data.facets ? this.data.facets.year.sort(function (a, b) { return (a.facet > b.facet) ? 1 : ((b.facet > a.facet) ? -1 : 0) }) : []
+      if (this.year === 'Any') {
+        return this.data.facets ? this.data.facets.year.sort(function (a, b) { return (a.facet > b.facet) ? 1 : ((b.facet > a.facet) ? -1 : 0) }) : []
+      } else {
+        return this.data.facets ? this.data.facets.month : []
+      }
     },
 
     domains: function () {
@@ -130,9 +218,30 @@ export default {
 
   methods: {
     queryReddit (now = false) {
+      // Basic query
       var q = {q: this.q}
-      q.getFacets = ['subreddit', 'domain', 'year']
+      q.getFacets = ['subreddit', 'domain']
       q.aggregate = ['over_18', 'is_self']
+
+      // Filters
+      let f = {}
+      if (this.nsfw !== 'Any') {
+        f.over_18 = this.nsfw === 'Only'
+      }
+      if (this.type !== 'Any') {
+        f.is_self = this.type === 'Text'
+      }
+      if (this.year !== 'Any') {
+        f.year = this.year
+        q.getFacets.push('month')
+      } else {
+        q.getFacets.push('year')
+      }
+
+      if (f) {
+        q.filter = f
+      }
+
       this.performQuery(q, now)
     },
 
@@ -175,18 +284,37 @@ export default {
     },
 
     drawCharts () {
-      console.log('Draw charts')
       // subreddit bar
       this.fillChart('subreddits', this.subChart)
+
       // Year chart
       this.fillChart('years', this.dateChart)
+
       // Domain chart
       this.fillChart('domains', this.domChart)
+
+      // Aggregate chart
+      if (this.data.aggregates) {
+        if (this.data.aggregates.over_18) {
+          let cols = []
+          cols.push(['nsfw', this.data.aggregates.over_18.true])
+          cols.push(['sfw', this.data.aggregates.over_18.false])
+          this.nsfwChart.data.columns = cols
+        }
+        if (this.data.aggregates.is_self) {
+          let cols = []
+          cols.push(['text', this.data.aggregates.is_self.true])
+          cols.push(['link', this.data.aggregates.is_self.false])
+          this.selfChart.data.columns = cols
+        }
+      }
+
+      // Update route
+      this.$router.push({path: '', query: {q: this.q, nsfw: this.nsfw, type: this.type, year: this.year}})
     },
 
     setupCharts: debounce(function () {
       this.drawCharts()
-      this.$router.push({path: '', query: {q: this.q, nsfw: this.nsfw}})
     }, 1000)
 
   },
@@ -198,6 +326,18 @@ export default {
   watch: {
     q (value) {
       this.queryReddit()
+    },
+
+    nsfw (value) {
+      this.queryReddit(true)
+    },
+
+    year (value) {
+      this.queryReddit(true)
+    },
+
+    type (value) {
+      this.queryReddit(true)
     }
   }
 
@@ -230,6 +370,16 @@ export default {
 
 .panel-body {
   padding: 5px;
+}
+
+.breadcrumb>li+li:before {
+  content: "";
+}
+
+.btn-xs {
+  padding: 2px 10px;
+  margin-top: -3px;
+  font-weight: bold;
 }
 
 </style>

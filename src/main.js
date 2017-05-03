@@ -4,6 +4,7 @@ import './assets/css/searchera.css'
 
 // Node modules
 import '../node_modules/c3/c3.min.css'
+import '../node_modules/vue-instant/dist/vue-instant.css'
 
 // Vue imports
 import Vue from 'vue'

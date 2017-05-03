@@ -162,4 +162,8 @@ export default {
     border-collapse: collapse;
     box-shadow: 0 0 0 2px #f1f1f1;
 }
+
+.c3-chart-arc {
+  opacity: 0.8!important;
+}
 </style>
