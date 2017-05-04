@@ -39,7 +39,7 @@ export default {
 
   data () {
     return {
-      url: 'http://searchreddit.net:443/1/datastores/reddit2/query?x-searchera-application-id=aaaaaaaa&x-searchera-rest-api-key=kZDjVuFmWMACuirvmjn5U3YzH31DeEIP',
+      url: 'http://searchreddit.net:443/1/datastores/reddit/query?x-searchera-application-id=aaaaaaaa&x-searchera-rest-api-key=kZDjVuFmWMACuirvmjn5U3YzH31DeEIP',
       limit: 10,
       minChars: 0,
       query: this.value,

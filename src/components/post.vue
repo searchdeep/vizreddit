@@ -9,7 +9,7 @@
       <a href="" class="pull-left" style="margin-right:10px;" v-if="hit.thumbnail.indexOf('http://') > -1"> <img alt="image" :src="hit.thumbnail" height="70" width="70"></a>
       <div class="media-body">
         <div>
-          <span><a target="_blank" :href="hit.url" class="vote-title ml-5" :html="hit.title">{{hit.title}}</a></span><span class="vote-info text-muted ml-10"><a :href="'http://'+hit.domain" target="_blank" class="text-muted" >({{hit.domain}})</a></span>
+          <span><a target="_blank" :href="hit.url" class="vote-title ml-5" v-html="hit.title"></a></span><span class="vote-info text-muted ml-10"><a :href="'http://'+hit.domain" target="_blank" class="text-muted" >({{hit.domain}})</a></span>
         </div>
         <div class="vote-info ml-5 text-grey-300">
           <span class="label label-flat border-danger text-danger-600" v-if="hit.over_18">nsfw</span>
@@ -88,6 +88,11 @@ export default {
 .post-row {
   margin-left: -20px !important;
   margin-right: -20px !important;
+}
+
+.mark {
+    background: #ff0 !important;
+    padding: 0px !important;
 }
 
 </style>

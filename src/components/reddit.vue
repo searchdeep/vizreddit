@@ -188,7 +188,7 @@ export default {
   data () {
     return {
       months: ['ddd', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
-      url: 'http://searchreddit.net:443/1/datastores/reddit2/query?x-searchera-application-id=aaaaaaaa&x-searchera-rest-api-key=kZDjVuFmWMACuirvmjn5U3YzH31DeEIP',
+      url: 'http://searchreddit.net:443/1/datastores/reddit/query?x-searchera-application-id=aaaaaaaa&x-searchera-rest-api-key=kZDjVuFmWMACuirvmjn5U3YzH31DeEIP',
       // Route params
       q: this.$route.query.q || '',
       nsfw: this.$route.query.nsfw || 'Any',
@@ -310,6 +310,7 @@ export default {
         q.filter = f
       }
 
+      q.highlight = {fields: ['title'], inSource: true}
       this.performQuery(q, now)
     },
 
