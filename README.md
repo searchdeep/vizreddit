@@ -2,6 +2,8 @@
 
 > Reddit visualization
 
+This was built in few hours, most of it late in the night by an absolute newbie to web development.  Vuejs made things a lot easier though and I have something that works :)
+
 ## Build Setup
 
 ``` bash
