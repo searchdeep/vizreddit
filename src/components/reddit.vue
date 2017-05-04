@@ -187,7 +187,8 @@ export default {
 
   data () {
     return {
-      url: 'http://searchreddit.net:443/1/datastores/reddit/query?x-searchera-application-id=aaaaaaaa&x-searchera-rest-api-key=kZDjVuFmWMACuirvmjn5U3YzH31DeEIP',
+      months: ['ddd', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'],
+      url: 'http://searchreddit.net:443/1/datastores/reddit2/query?x-searchera-application-id=aaaaaaaa&x-searchera-rest-api-key=kZDjVuFmWMACuirvmjn5U3YzH31DeEIP',
       // Route params
       q: this.$route.query.q || '',
       nsfw: this.$route.query.nsfw || 'Any',
@@ -195,6 +196,7 @@ export default {
       year: this.$route.query.year || 'Any',
       subreddit: this.$route.query.subreddit || '',
       author: this.$route.query.author || '',
+      domain: this.$route.query.domain || '',
 
       // Filter
       addFilter: false,
@@ -238,7 +240,15 @@ export default {
       if (this.year === 'Any') {
         return this.data.facets ? this.data.facets.year.sort(function (a, b) { return (a.facet > b.facet) ? 1 : ((b.facet > a.facet) ? -1 : 0) }) : []
       } else {
-        return this.data.facets ? this.data.facets.month : []
+        let d = this.data.facets ? this.data.facets.month.sort(function (a, b) { return (a.facet > b.facet) ? 1 : ((b.facet > a.facet) ? -1 : 0) }) : []
+        d = JSON.parse(JSON.stringify(d))
+        if (d.length > 0) {
+          d.forEach((f) => {
+            let fm = f.facet.substring(0, 2)
+            f.facet = this.months[parseInt(fm)]
+          })
+        }
+        return d
       }
     },
 
@@ -248,6 +258,30 @@ export default {
   },
 
   methods: {
+    processFilter (f, type) {
+      let sf = []
+      let sfn = false
+
+        this.filters.forEach((ff) => {
+          if (ff.type === 'subreddit') {
+            sf.push(ff.value)
+            sfn = ff.negate
+          } else if (ff.type === 'author') {
+            uf.push(ff.value)
+            ufn = ff.negate
+          }
+        })
+
+        if (sf.length > 0) {
+          if (sfn) {
+            f.subreddit = {'$nin': sf}
+          } else {
+            f.subreddit = {'$or': sf}
+          }
+        }
+
+    },
+
     queryReddit (now = false) {
       // Basic query
       var q = {q: this.q}

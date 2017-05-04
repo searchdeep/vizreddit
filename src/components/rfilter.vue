@@ -58,7 +58,7 @@ export default {
 
   data () {
     return {
-      filterOptions: [{text: 'Subreddit', id: 'subreddit'}, {text: 'User', id: 'author'}],
+      filterOptions: [{text: 'Subreddit', id: 'subreddit'}, {text: 'User', id: 'author'}, {text: 'Domain', id: 'domain'}],
       sfilter: 'subreddit',
       negate: false,
       fvalue: ''
