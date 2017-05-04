@@ -536,4 +536,11 @@ export default {
     border-bottom: 1px solid #ddd;
 }
 
+.mark, mark {
+    background: #ff0 !important;
+    padding: 0px !important;
+    color: #000;
+}
+
+
 </style>

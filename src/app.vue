@@ -83,4 +83,11 @@ export default {
   padding: 5px 15px;
   font-weight: 600;
 }
+
+.mark, mark {
+    background: #ff0 !important;
+    padding: 0px !important;
+    color: #000 !important;
+}
+
 </style>

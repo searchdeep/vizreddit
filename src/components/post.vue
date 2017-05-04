@@ -90,9 +90,10 @@ export default {
   margin-right: -20px !important;
 }
 
-.mark {
+.mark, mark {
     background: #ff0 !important;
     padding: 0px !important;
+    color: #000;
 }
 
 </style>
