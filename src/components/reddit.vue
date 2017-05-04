@@ -262,24 +262,20 @@ export default {
       let sf = []
       let sfn = false
 
-        this.filters.forEach((ff) => {
-          if (ff.type === 'subreddit') {
-            sf.push(ff.value)
-            sfn = ff.negate
-          } else if (ff.type === 'author') {
-            uf.push(ff.value)
-            ufn = ff.negate
-          }
-        })
-
-        if (sf.length > 0) {
-          if (sfn) {
-            f.subreddit = {'$nin': sf}
-          } else {
-            f.subreddit = {'$or': sf}
-          }
+      this.filters.forEach((ff) => {
+        if (ff.type === type) {
+          sf.push(ff.value)
+          sfn = ff.negate
         }
+      })
 
+      if (sf.length > 0) {
+        if (sfn) {
+          f[type] = {'$nin': sf}
+        } else {
+          f[type] = {'$or': sf}
+        }
+      }
     },
 
     queryReddit (now = false) {
@@ -305,37 +301,9 @@ export default {
 
       if (this.filters) {
         // track filters for subreddit and user
-        let sf = []
-        let uf = []
-        // track negation values for sub and u
-        let sfn = false
-        let ufn = false
-
-        this.filters.forEach((ff) => {
-          if (ff.type === 'subreddit') {
-            sf.push(ff.value)
-            sfn = ff.negate
-          } else if (ff.type === 'author') {
-            uf.push(ff.value)
-            ufn = ff.negate
-          }
-        })
-
-        if (sf.length > 0) {
-          if (sfn) {
-            f.subreddit = {'$nin': sf}
-          } else {
-            f.subreddit = {'$or': sf}
-          }
-        }
-
-        if (uf.length > 0) {
-          if (ufn) {
-            f.author = {'$nin': uf}
-          } else {
-            f.author = {'$or': uf}
-          }
-        }
+        this.processFilter(f, 'subreddit')
+        this.processFilter(f, 'author')
+        this.processFilter(f, 'domain')
       }
 
       if (f) {
@@ -356,34 +324,26 @@ export default {
       this.filters.splice(idx, 1)
     },
 
+    parseQueryFilter (t) {
+      if (this[t] !== '') {
+        let srs = this[t].split(',')
+        srs.forEach((s) => {
+          let f = {type: t}
+          if (s.charAt(0) === '!') {
+            f.negate = true
+            s = s.substr(1)
+          }
+          f.value = s
+          this.filters.push(f)
+        })
+      }
+    },
+
     parseQueryParams () {
       // Parse subreddit
-      if (this.subreddit !== '') {
-        let srs = this.subreddit.split(',')
-        srs.forEach((s) => {
-          let f = {type: 'subreddit'}
-          if (s.charAt(0) === '!') {
-            f.negate = true
-            s = s.substr(1)
-          }
-          f.value = s
-          this.filters.push(f)
-        })
-      }
-
-      // Parse authors
-      if (this.author !== '') {
-        let srs = this.author.split(',')
-        srs.forEach((s) => {
-          let f = {type: 'author'}
-          if (s.charAt(0) === '!') {
-            f.negate = true
-            s = s.substr(1)
-          }
-          f.value = s
-          this.filters.push(f)
-        })
-      }
+      this.parseQueryFilter('subreddit')
+      this.parseQueryFilter('author')
+      this.parseQueryFilter('domain')
     },
 
     performQuery (q, now) {
@@ -451,7 +411,22 @@ export default {
       }
 
       // Update route
-      this.$router.push({path: '', query: {q: this.q, nsfw: this.nsfw, type: this.type, year: this.year, author: this.author, subreddit: this.subreddit}})
+      this.$router.push({path: '', query: {q: this.q, nsfw: this.nsfw, type: this.type, year: this.year, author: this.author, subreddit: this.subreddit, domain: this.domain}})
+    },
+
+    setupFilters (t) {
+      let sr = ''
+      this.filters.forEach((f) => {
+        if (f.type === t) {
+          if (sr === '') {
+            if (f.negate) {
+              sr = '!'
+            }
+          }
+          sr = sr + f.value + ','
+        }
+      })
+      this[t] = sr.replace(/,\s*$/, '')
     },
 
     setupCharts: debounce(function () {
@@ -484,31 +459,9 @@ export default {
 
     filters (value) {
       // setup query params
-      let sr = ''
-      this.filters.forEach((f) => {
-        if (f.type === 'subreddit') {
-          if (sr === '') {
-            if (f.negate) {
-              sr = '!'
-            }
-          }
-          sr = sr + f.value + ','
-        }
-      })
-      this.subreddit = sr.replace(/,\s*$/, '')
-
-      let us = ''
-      this.filters.forEach((f) => {
-        if (f.type === 'author') {
-          if (us === '') {
-            if (f.negate) {
-              us = '!'
-            }
-          }
-          us = us + f.value + ','
-        }
-      })
-      this.author = us.replace(/,\s*$/, '')
+      this.setupFilters('subreddit')
+      this.setupFilters('author')
+      this.setupFilters('domain')
 
       // query
       this.queryReddit(true)
